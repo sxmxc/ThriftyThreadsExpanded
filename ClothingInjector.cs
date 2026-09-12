@@ -23,16 +23,38 @@ namespace ThriftyThreadsExpanded;
 
 internal static class ClothingInjector
 {
+    private static readonly object RegistrationGate = new();
     private static bool _registered;
+    private static bool _registrationInProgress;
     private static bool _warnedAboutBaseDefinition;
 
     public static void RegisterAll()
     {
-        if (_registered)
+        lock (RegistrationGate)
         {
-            return;
+            if (_registered || _registrationInProgress)
+            {
+                return;
+            }
+
+            _registrationInProgress = true;
         }
 
+        try
+        {
+            RegisterAllCore();
+        }
+        finally
+        {
+            lock (RegistrationGate)
+            {
+                _registrationInProgress = false;
+            }
+        }
+    }
+
+    private static void RegisterAllCore()
+    {
         var registry = Singleton<Registry>.Instance;
         if (registry?.ItemRegistry is null)
         {
@@ -165,6 +187,15 @@ internal static class ClothingInjector
         }
         catch (Exception exception)
         {
+            // S1API registers the native definition before completing Build().
+            // If a later step fails, the next registration attempt must adopt
+            // that definition instead of inserting the same ID again.
+            if (TryFindExisting(registry, variant.Id, out var partiallyRegistered))
+            {
+                Log.Warning($"Recovered partially registered clothing item '{variant.Id}' after build failure: {exception.GetBaseException().Message}");
+                return partiallyRegistered;
+            }
+
             Log.Error($"S1API failed to build clothing item '{variant.Id}': {exception}");
             return null;
         }
