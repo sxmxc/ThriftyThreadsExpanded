@@ -42,4 +42,14 @@ dotnet build .\ThriftyThreadsExpanded.sln -c Il2cpp -p:AutomateLocalDeployment=f
 
 Outputs are written beneath `bin\Mono` and `bin\Il2cpp`.
 
+To package one built runtime DLL into the release layout (`mods\<dll>`), run:
+
+```powershell
+.\package.ps1                    # package the IL2CPP build
+.\package.ps1 -Configuration Mono
+.\package.ps1 -Build              # build IL2CPP, then package it
+```
+
+The ZIP is written to `packages\ThriftyThreadsExpanded.zip`.
+
 The project does not include or redistribute game assemblies, decompiled source, generated IL2CPP wrappers, or game artwork/assets.

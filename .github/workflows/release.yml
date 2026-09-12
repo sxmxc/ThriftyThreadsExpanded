@@ -1,0 +1,35 @@
+name: Release package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build and package IL2CPP release
+    runs-on: [self-hosted, windows, schedule-one]
+
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Restore
+        run: dotnet restore .\ThriftyThreadsExpanded.sln
+
+      - name: Build and package
+        run: .\package.ps1 -Configuration Il2cpp -Build
+
+      - name: Upload release package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" .\packages\ThriftyThreadsExpanded.zip --clobber

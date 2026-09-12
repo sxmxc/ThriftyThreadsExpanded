@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build (${{ matrix.configuration }})
+    runs-on: [self-hosted, windows, schedule-one]
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Mono, Il2cpp]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Restore
+        run: dotnet restore .\ThriftyThreadsExpanded.sln
+
+      - name: Build
+        run: dotnet build .\ThriftyThreadsExpanded.sln -c ${{ matrix.configuration }} --no-restore -p:AutomateLocalDeployment=false
