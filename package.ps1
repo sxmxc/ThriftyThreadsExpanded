@@ -2,6 +2,7 @@
 param(
     [ValidateSet('Mono', 'Il2cpp')]
     [string]$Configuration = 'Il2cpp',
+    [string]$DllPath,
     [switch]$Build
 )
 
@@ -22,9 +23,14 @@ if ($Build) {
     }
 }
 
-$dllCandidates = @(Get-ChildItem -LiteralPath $outputDirectory -Filter $dllName -File -Recurse -ErrorAction SilentlyContinue)
+if ($DllPath) {
+    $dllPath = (Resolve-Path -LiteralPath $DllPath -ErrorAction Stop).Path
+    $dllCandidates = @([System.IO.FileInfo]::new($dllPath))
+} else {
+    $dllCandidates = @(Get-ChildItem -LiteralPath $outputDirectory -Filter $dllName -File -Recurse -ErrorAction SilentlyContinue)
+}
 if ($dllCandidates.Count -ne 1) {
-    throw "Expected exactly one '$dllName' beneath '$outputDirectory'. Build the mod first or pass -Build."
+    throw "Expected exactly one DLL to package. Build the mod first, pass -Build, or provide -DllPath."
 }
 
 $dllPath = $dllCandidates[0].FullName

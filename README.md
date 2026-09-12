@@ -48,8 +48,9 @@ To package one built runtime DLL into the release layout (`mods\<dll>`), run:
 .\package.ps1                    # package the IL2CPP build
 .\package.ps1 -Configuration Mono
 .\package.ps1 -Build              # build IL2CPP, then package it
+.\package.ps1 -DllPath .\packages\mods\ThriftyThreadsExpanded_Il2cpp.dll
 ```
 
-The ZIP is written to `packages\ThriftyThreadsExpanded.zip`.
+The ZIP is written to `packages\ThriftyThreadsExpanded.zip`. GitHub Actions validates the committed IL2CPP DLL and package on pushes and pull requests, and uploads the package when a GitHub release is published. Full compilation still requires the local Schedule I reference assemblies described above.
 
 The project does not include or redistribute game assemblies, decompiled source, generated IL2CPP wrappers, or game artwork/assets.

@@ -9,8 +9,8 @@ permissions:
 
 jobs:
   package:
-    name: Build and package IL2CPP release
-    runs-on: [self-hosted, windows, schedule-one]
+    name: Package IL2CPP release
+    runs-on: windows-latest
 
     steps:
       - name: Check out release source
@@ -18,16 +18,9 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 6.0.x
-
-      - name: Restore
-        run: dotnet restore .\ThriftyThreadsExpanded.sln
-
-      - name: Build and package
-        run: .\package.ps1 -Configuration Il2cpp -Build
+      - name: Create release package
+        shell: pwsh
+        run: .\package.ps1 -DllPath .\packages\mods\ThriftyThreadsExpanded_Il2cpp.dll
 
       - name: Upload release package
         env:

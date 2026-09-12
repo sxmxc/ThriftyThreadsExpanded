@@ -1,29 +1,31 @@
-name: Build
+name: Validate package
 
 on:
   push:
   pull_request:
 
 jobs:
-  build:
-    name: Build (${{ matrix.configuration }})
-    runs-on: [self-hosted, windows, schedule-one]
-    strategy:
-      fail-fast: false
-      matrix:
-        configuration: [Mono, Il2cpp]
+  validate:
+    name: Validate committed IL2CPP package
+    runs-on: windows-latest
 
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 6.0.x
+      - name: Recreate package from committed DLL
+        shell: pwsh
+        run: .\package.ps1 -DllPath .\packages\mods\ThriftyThreadsExpanded_Il2cpp.dll
 
-      - name: Restore
-        run: dotnet restore .\ThriftyThreadsExpanded.sln
-
-      - name: Build
-        run: dotnet build .\ThriftyThreadsExpanded.sln -c ${{ matrix.configuration }} --no-restore -p:AutomateLocalDeployment=false
+      - name: Verify package contents
+        shell: pwsh
+        run: |
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path '.\packages\ThriftyThreadsExpanded.zip'))
+          try {
+              $entries = @($archive.Entries | Where-Object { -not $_.FullName.EndsWith('/') })
+              if ($entries.Count -ne 1 -or $entries[0].FullName -ne 'mods/ThriftyThreadsExpanded_Il2cpp.dll') {
+                  throw "Unexpected package contents: $($entries.FullName -join ', ')"
+              }
+          } finally {
+              $archive.Dispose()
+          }

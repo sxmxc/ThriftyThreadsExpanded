@@ -3,7 +3,7 @@ namespace ThriftyThreadsExpanded.Utils
     public static class Constants
     {
         public const string ModName = "Thrifty Threads Expanded";
-        public const string ModVersion = "1.0.2";
+        public const string ModVersion = "1.0.3";
         public const string ModAuthor = "Voidmoose";
         public const string ModDescription = "Adds configurable, purchasable copies of NPC-only clothing to Thrifty Threads.";
 
