@@ -14,13 +14,21 @@ $outputDirectory = Join-Path $projectRoot "bin\$Configuration"
 $dllName = "ThriftyThreadsExpanded_$Configuration.dll"
 $packagesDirectory = Join-Path $projectRoot 'packages'
 $archivePath = Join-Path $packagesDirectory 'ThriftyThreadsExpanded.zip'
+$temporaryBuildDirectory = $null
 
 if ($Build) {
+    $temporaryBuildDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ("ThriftyThreadsExpanded-build-" + [guid]::NewGuid().ToString('N'))
+    $buildIntermediatePath = Join-Path $temporaryBuildDirectory "obj\$Configuration\"
+    $buildOutputPath = Join-Path $temporaryBuildDirectory "bin\$Configuration\"
+    New-Item -ItemType Directory -Path $buildIntermediatePath,$buildOutputPath -Force | Out-Null
+
     Write-Host "Building $Configuration..."
-    & dotnet build $projectFile -c $Configuration -p:AutomateLocalDeployment=false
+    & dotnet build $projectFile -c $Configuration -p:AutomateLocalDeployment=false -p:IntermediateOutputPath=$buildIntermediatePath -p:OutputPath=$buildOutputPath
     if ($LASTEXITCODE -ne 0) {
         throw "The $Configuration build failed with exit code $LASTEXITCODE."
     }
+
+    $outputDirectory = $buildOutputPath
 }
 
 if ($DllPath) {
@@ -46,6 +54,9 @@ try {
 } finally {
     if (Test-Path -LiteralPath $stagingDirectory) {
         Remove-Item -LiteralPath $stagingDirectory -Recurse -Force
+    }
+    if ($temporaryBuildDirectory -and (Test-Path -LiteralPath $temporaryBuildDirectory)) {
+        Remove-Item -LiteralPath $temporaryBuildDirectory -Recurse -Force
     }
 }
 
